@@ -32,6 +32,7 @@ struct s {
     int socket_fd;
     l_socket* next;
     char is_listen;
+    char auth;
 };
 
 typedef struct connection {

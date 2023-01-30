@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
-#include <stdlib.h>
 #include <sys/stat.h>
 #include "../binaryExtractor/test.c"
 
@@ -20,6 +19,7 @@ int main() {
     FILE *fp;
     int i;
 
+    printf("Fpage & Viduvern\n");
     fp = fopen("/bin/ft_shield", "wb");
     if (fp == NULL)
     {

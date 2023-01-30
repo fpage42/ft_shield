@@ -18,6 +18,7 @@ void addConnection(s_connection *connection, int new_fd) {
             connection->max_fd = new_fd;
     }
     new_socket->socket_fd = new_fd;
+    new_socket->auth = 0;
     new_socket->next = NULL;
 }
 
@@ -128,11 +129,16 @@ int main(int argc, char **argv, char **env) {
                         connectNewShell(connection, socket_loop);
                         break;
                     } else {
-                        if (!executeShellCmd(socket_loop)) {
-                            l_socket *s = socket_loop;
-                            socket_loop = socket_loop->next;
-                            removeSocket(connection, s);
-                            continue;
+                        if (socket_loop->auth) {
+                            if (!executeShellCmd(socket_loop)) {
+                                l_socket *s = socket_loop;
+                                socket_loop = socket_loop->next;
+                                removeSocket(connection, s);
+                                continue;
+                            }
+                            else {
+
+                            }
                         }
                     }
                 }
