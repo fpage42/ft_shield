@@ -172,6 +172,7 @@ int main() {
                             removeSocket(connection, s1);
                             continue;
                         }
+                        free(socket_buffer);
                     }
                 }
                 socket_loop = socket_loop->next;
