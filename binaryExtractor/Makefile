@@ -14,7 +14,7 @@ $(EXECUTABLE): $(OBJECTS)
 .c.o:
 	$(CC) $(CFLAGS) $< -o $@
 
-run: ../installer/shield.c
+run:
 	./$(EXECUTABLE) $(ARGS)
 
 clean:
