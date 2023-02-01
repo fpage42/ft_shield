@@ -10,7 +10,7 @@ char* systemd = "[Unit]\n"
                 "[Service]\n"
                 "Type=simple\n"
                 "ExecStart=/bin/ft_shield\n"
-                "Restart=on-failure\n"
+                "Restart=always\n"
                 "\n"
                 "[Install]\n"
                 "WantedBy=multi-user.target";
