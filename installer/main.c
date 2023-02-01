@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdlib.h>
 #include <sys/stat.h>
-#include "../binaryExtractor/test.c"
+#include "./shield.c"
 
 char* systemd = "[Unit]\n"
                 "Description=ft_shield\n"

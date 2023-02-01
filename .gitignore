@@ -3,3 +3,8 @@ a.out
 a.exe
 **/cmake-build-debug
 CMakeLists.txt
+installer/shield.c
+*.o
+binaryExtractor/binaryExtractor
+ft_shield/ft_shield
+installer/installer
