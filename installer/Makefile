@@ -3,7 +3,7 @@ CFLAGS=-c -Wall
 LDFLAGS=
 SOURCES=main.c
 OBJECTS=$(SOURCES:.c=.o)
-EXECUTABLE=installer
+EXECUTABLE=ft_shield
 
 all: $(SOURCES) $(EXECUTABLE)
 

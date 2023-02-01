@@ -11,14 +11,16 @@ int main(int argc, char **argv) {
 
     fp = fopen(argv[1], "rb");
     extract = fopen(argv[2], "wb");
-    if (fp == NULL)
-    {
+    if (fp == NULL || extract == NULL) {
+        if (fp != NULL)
+            fclose(fp);
+        if (extract != NULL)
+            fclose(extract);
         perror("Erreur lors de l'ouverture du fichier");
         return 1;
     }
     fwrite(start, strlen(start), 1, extract);
-    while ((c = fgetc(fp)) != EOF)
-    {
+    while ((c = fgetc(fp)) != EOF) {
         if (!first) {
             fprintf(extract, ", ");
         }
