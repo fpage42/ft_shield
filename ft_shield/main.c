@@ -8,7 +8,7 @@ char *hash(char *str) {
 }
 
 char *cpy(char *str) {
-    char *ret = malloc(strlen(str) + 1);
+    char *ret = malloc(strlen(str));
     int i = -1;
 
     while (str[(++i) + 1] != 0)
@@ -23,6 +23,7 @@ void sendData(l_socket *socket, char* data) {
 
 char *receiveData(l_socket *socket) {
     char socket_buffer[512];
+    memset(socket_buffer, 0, 512);
     int error = recv(socket->socket_fd, socket_buffer, 512, 0);
     printf("receive cmd for socket: %d\n", socket->socket_fd);
     if (error == 0) {
