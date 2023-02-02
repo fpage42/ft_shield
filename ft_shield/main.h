@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/wait.h>
+#include <fcntl.h>
 
 #if defined(_WIN32) || defined(WIN32)
 
@@ -30,6 +32,7 @@ typedef int socket_t;
 typedef struct s l_socket;
 struct s {
     int socket_fd;
+    int pipe_fd;
     l_socket* next;
     char is_listen;
     char auth;

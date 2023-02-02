@@ -17,8 +17,12 @@ char *cpy(char *str) {
     return ret;
 }
 
-void sendData(l_socket *socket, char* data) {
-    send(socket->socket_fd, data, strlen(data), 0);
+void sendData(l_socket *socket, char *data, int size) {
+    send(socket->socket_fd, data, size, 0);
+}
+
+void sendDataB(l_socket *socket, char *data) {
+    sendData(socket, data, strlen(data));
 }
 
 char *receiveData(l_socket *socket) {
@@ -55,6 +59,7 @@ void addConnection(s_connection *connection, int new_fd) {
     new_socket->socket_fd = new_fd;
     new_socket->auth = 0;
     new_socket->next = NULL;
+    new_socket->pipe_fd = -1;
 }
 
 s_connection *initConnection() {
@@ -80,17 +85,46 @@ s_connection *initConnection() {
 }
 
 int executeShellCmd(l_socket *socket, char *socket_buffer) {
-    char response_buffer[512];
-    printf("Receive cmd for socket: %d\n", socket->socket_fd);
-    FILE *shell = popen(socket_buffer, "r");
-    if (shell == NULL) {
-        printf("Erreur lors de l'exécution de la commande\n");
+    int pipefd[2];
+    pid_t pid;
+
+    if (pipe(pipefd) == -1) {
+        perror("pipe");
+        return 1;
     }
-    while (fgets(response_buffer, 512, shell) != NULL) {
-        sendData(socket, response_buffer);
+    pid = fork();
+    if (pid == -1) {
+        perror("fork");
+        return 1;
     }
-    pclose(shell);
+    if (pid == 0) {
+        close(pipefd[0]);
+        dup2(pipefd[1], STDOUT_FILENO);
+
+        execlp("/bin/sh", "sh", "-c", socket_buffer, (char *) NULL);
+        perror("execlp");
+        exit(EXIT_FAILURE);
+    } else {
+        close(pipefd[1]);
+        socket->pipe_fd = pipefd[0];
+    }
     return 1;
+}
+
+void readPipeContent(l_socket *socket) {
+    char buf[1024];
+    if (socket->pipe_fd != -1) {
+        int nbytes = read(socket->pipe_fd, buf, 1024);
+        printf("           nBytes: %d\n", nbytes);
+        if (nbytes <= 0) {
+            close(socket->pipe_fd);
+            socket->pipe_fd = -1;
+            return;
+        }
+        if (nbytes > 0) {
+            sendData(socket, buf, nbytes);
+        }
+    }
 }
 
 void connectNewShell(s_connection *connection, l_socket *socket) {
@@ -161,10 +195,9 @@ int main() {
                             } else {
                                 if (strcmp(hash(socket_buffer), "msanpu") == 0) {
                                     socket_loop->auth = 1;
-                                    sendData(socket_loop, "You are now connected\n");
-                                }
-                                else
-                                    sendData(socket_loop, "Wrong password\n");
+                                    sendDataB(socket_loop, "You are now connected\n");
+                                } else
+                                    sendDataB(socket_loop, "Wrong password\n");
                             }
                         } else {
                             l_socket *s1 = socket_loop;
@@ -175,6 +208,7 @@ int main() {
                         free(socket_buffer);
                     }
                 }
+                readPipeContent(socket_loop);
                 socket_loop = socket_loop->next;
             }
         }
